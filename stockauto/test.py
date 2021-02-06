@@ -1,36 +1,59 @@
-# This is for getting the data of a certain stock
 import win32com.client
+import pandas as pd
+instStockChart = win32com.client.Dispatch("CpSysDib.StockChart")
+instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
 
-# 연결 여부 체크
-objCpCybos = win32com.client.Dispatch("CpUtil.CpCybos")
-bConnect = objCpCybos.IsConnect
-if (bConnect == 0):
-    print("PLUS가 정상적으로 연결되지 않음. ")
-    exit()
+testCode = instCpStockCode.NameToCode('삼성전자')
+nameCode = instCpStockCode.CodetoName(testCode)
+print(testCode)
+print(nameCode)
 
-# 현재가 객체 구하기
-objStockMst = win32com.client.Dispatch("DsCbo1.StockMst")
-objStockMst.SetInputValue(0, 'A005930')  # 종목 코드 - 삼성전자
-objStockMst.BlockRequest()
+instStockChart.SetInputValue(0, testCode)
+instStockChart.SetInputValue(1, ord('1'))
+instStockChart.SetInputValue(2, 20160217)
+instStockChart.SetInputValue(3, 20160217)
+#instStockChart.SetInputValue(4, 78)
+instStockChart.SetInputValue(5, (0, 1, 5, 8))
+instStockChart.SetInputValue(6, ord('m'))
+instStockChart.SetInputValue(7, 5)
+instStockChart.SetInputValue(9, ord('1'))
+instStockChart.SetInputvalue(10, ord('1'))
 
-# 현재가 통신 및 통신 에러 처리
-rqStatus = objStockMst.GetDibStatus()
-rqRet = objStockMst.GetDibMsg1()
-print("통신상태", rqStatus, rqRet)
-if rqStatus != 0:
-    exit()
+# BlockRequest
+instStockChart.BlockRequest()
 
-# 현재가 정보 조회
+# GetHeaderValue
+numData = instStockChart.GetHeaderValue(3)
+numField = instStockChart.GetHeaderValue(1)
+print('Date     Time End   Volume')
+# GetDataValue
 
-offer = objStockMst.GetHeaderValue(16)  # 매도호가
-print("매도호가", offer)
+dates = []
+times = []
+end = []
+vols = []
 
-""" ------------------------------------------------------------------------ """
-# This is for sending an alarm/message to slacker bot
 
-from slacker import Slacker
+for i in range(numData):
+    #if i%5 == 1:
+    for j in range(numField):
+        print(instStockChart.GetDataValue(0, i))
+        print(instStockChart.GetDataValue(1, i))
+        print(instStockChart.GetDataValue(2, i))
+        print(instStockChart.GetDataValue(3, i))
+        dates.append(instStockChart.GetDataValue(0, i))
+        times.append(instStockChart.GetDataValue(1, i))
+        end.append(instStockChart.GetDataValue(2, i))
+        vols.append(instStockChart.GetDataValue(3, i))
+    print("")
 
-slack = Slacker('xoxb-1709162090453-1712267545922-zBUfyirsvPaOjIXJVqdWle4R')
+data = {'date': dates,
+        'times': times,
+        'end': end,
+        'vols': vols}
 
-# Send a message to #general channel
-slack.chat.post_message('#stocks', 'Current price:'+ str(offer))
+df = pd.DataFrame(data, columns=['Dates', 'Time', 'End', 'Vol'])
+df = df.set_index('Dates')
+
+df.to_csv('5MinTestData.csv', index=False)
+
