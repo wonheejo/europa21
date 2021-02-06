@@ -55,5 +55,5 @@ data = {'date': dates,
 df = pd.DataFrame(data, columns=['Dates', 'Time', 'End', 'Vol'])
 df = df.set_index('Dates')
 
-df.to_csv('5MinTestData.csv', index=False)
+df.to_csv('5MinTestData.csv')
 
