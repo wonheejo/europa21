@@ -13,10 +13,10 @@ def logIn():
         flag = 0
         while flag == 0:
             try:
-                title="대신증권 CYBOS FAMILY"
-                dlg = app.connect(title=title).Dialog
-                dlg['예(Y)Button'].click()
-                #app.window(title_re='대신증권_CYBOS_FAMILY').window(title='예(Y)Button').click()
+                #title="대신증권 CYBOS FAMILY"
+                #dlg = app.connect(title=title).Dialog
+                #dlg['예(&Y)Button'].click()
+                app.window(title_re='대신증권_CYBOS_FAMILY').window(title='예(Y)Button').click()
 
                 print('대신증권 CYBOS FAMILY 키보드보안')
 
