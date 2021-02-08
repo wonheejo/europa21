@@ -15,7 +15,7 @@ print(nameCode)
 
 instStockChart.SetInputValue(0, testCode)
 instStockChart.SetInputValue(1, ord('1'))
-instStockChart.SetInputValue(2, 20160217)
+instStockChart.SetInputValue(2, 20160218)
 instStockChart.SetInputValue(3, 20160217)
 #instStockChart.SetInputValue(4, 78)
 instStockChart.SetInputValue(5, (0, 1, 5, 8))
@@ -54,20 +54,16 @@ for i in range(numData):
             vols.append(instStockChart.GetDataValue(j, i))
     print("")
 
-print(numField)
-print('dates:', dates)
-print('times:', times)
-print('end:', end)
-print('volume:', vols)
-
-
 data = {'date': dates,
         'times': times,
         'end': end,
         'vols': vols}
 
 df = pd.DataFrame(data)
-
+print(df)
+df = df.sort_values(by=['date', 'times'], ascending=True)
+df = df.reset_index()
+df = df.drop('index', axis=1)
 print(df)
 
 df.to_csv('5MinTestData.csv')
