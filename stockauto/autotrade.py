@@ -4,12 +4,14 @@ import pandas as pd
 from datetime import datetime
 from slacker import Slacker
 import time, calendar
+"""
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+"""
 
-slack = Slacker('xoxb-1709162090453-1712267545922-zBUfyirsvPaOjIXJVqdWle4R')
+slack = Slacker('xoxb-1709162090453-1712267545922-cRQiCzEdYkl6jTAKXYw01ZzK')
 
 def dbgout(message):
     """인자로 받은 문자열을 파이썬 셸과 슬랙으로 동시에 출력한다."""
@@ -197,15 +199,16 @@ def buy_etf(code):
             # 최유리 FOK 매수 주문 설정
             cpOrder.SetInputValue(0, "2")  # 2: 매수
             cpOrder.SetInputValue(1, acc)  # 계좌번호
-            cpOrder.SetInputValue(2, accFlag[0])  # 상품구분 - 주식 상품 중 첫번째
+            cpOrder.SetInputValue(2, accFlag)  # 상품구분 - 주식 상품 중 첫번째
             cpOrder.SetInputValue(3, code)  # 종목코드
             cpOrder.SetInputValue(4, buy_qty)  # 매수할 수량
-            cpOrder.SetInputValue(7, "2")  # 주문조건 0:기본, 1:IOC, 2:FOK
-            cpOrder.SetInputValue(8, "12")  # 주문호가 1:보통, 3:시장가
+            cpOrder.SetInputValue(7, "0")  # 주문조건 0:기본, 1:IOC, 2:FOK
+            cpOrder.SetInputValue(8, "01")  # 주문호가 1:보통, 3:시장가
             # 5:조건부, 12:최유리, 13:최우선
             # 매수 주문 요청
             ret = cpOrder.BlockRequest()
-            printlog('최유리 FoK 매수 ->', stock_name, code, buy_qty, '->', ret)
+            print(cpOrder.GetDibMsg1())
+            printlog('보통 IoC 매수 ->', stock_name, code, buy_qty, '->', ret)
             if ret == 4:
                 remain_time = cpStatus.LimitRequestRemainTime
                 printlog('주의: 연속 주문 제한에 걸림. 대기 시간:', remain_time / 1000)
@@ -260,10 +263,11 @@ def sell_all():
 
 if __name__ == '__main__':
     try:
-        symbol_list = ['A252670', 'A122630', 'A251340', 'A233740']
+        symbol_list = ['A005930']
+        # A252670 - 200선물인버스, A122630 - 코덱스 레버리지, A251340 -
         bought_list = []  # 매수 완료된 종목 리스트
-        target_buy_count = 4  # 매수할 종목 수
-        buy_percent = 0.25
+        target_buy_count = 1  # 매수할 종목 수
+        buy_percent = 0.5
         printlog('check_creon_system() :', check_creon_system())  # 크레온 접속 점검
         stocks = get_stock_balance('ALL')  # 보유한 모든 종목 조회
         total_cash = int(get_current_cash())  # 100% 증거금 주문 가능 금액 조회
@@ -272,7 +276,7 @@ if __name__ == '__main__':
         printlog('종목별 주문 비율 :', buy_percent)
         printlog('종목별 주문 금액 :', buy_amount)
         printlog('시작 시간 :', datetime.now().strftime('%m/%d %H:%M:%S'))
-        soldout = False;
+        soldout = False
 
         while True:
             t_now = datetime.now()
