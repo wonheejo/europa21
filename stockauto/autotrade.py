@@ -17,7 +17,7 @@ def dbgout(message):
     """인자로 받은 문자열을 파이썬 셸과 슬랙으로 동시에 출력한다."""
     print(datetime.now().strftime('[%m/%d %H:%M:%S]'), message)
     strbuf = datetime.now().strftime('[%m/%d %H:%M:%S] ') + message
-    slack.chat.post_message('#stocks', strbuf)
+    #slack.chat.post_message('#stocks', strbuf)
 
 
 def printlog(message, *args):
@@ -187,8 +187,8 @@ def buy_etf(code):
         if ask_price > 0:  # 매수호가가 존재하면
             buy_qty = buy_amount // ask_price
         stock_name, stock_qty = get_stock_balance(code)  # 종목명과 보유수량 조회
-        # printlog('bought_list:', bought_list, 'len(bought_list):',
-        #    len(bought_list), 'target_buy_count:', target_buy_count)
+        printlog('bought_list:', bought_list, 'len(bought_list):',
+            len(bought_list), 'target_buy_count:', target_buy_count)
         if current_price > target_price and current_price > ma5_price \
                 and current_price > ma10_price:
             printlog(stock_name + '(' + str(code) + ') ' + str(buy_qty) +
@@ -222,6 +222,8 @@ def buy_etf(code):
                 bought_list.append(code)
                 dbgout("`buy_etf(" + str(stock_name) + ' : ' + str(code) +
                        ") -> " + str(bought_qty) + "EA bought!" + "`")
+        else:
+            print('Does not meet buying conditions yet')
     except Exception as ex:
         dbgout("`buy_etf(" + str(code) + ") -> exception! " + str(ex) + "`")
 
