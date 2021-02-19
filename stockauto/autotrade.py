@@ -1,21 +1,30 @@
-import os, sys, ctypes
+import os
+import sys
+import ctypes
 import win32com.client
 import pandas as pd
 from datetime import datetime
 from slacker import Slacker
-import time, calendar
+import time
+import calendar
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+# Slack authorization code
 slack = Slacker('xoxb-1709162090453-1712267545922-zBUfyirsvPaOjIXJVqdWle4R')
+
+# Send message out to slacker bot
+
 
 def dbgout(message):
     """인자로 받은 문자열을 파이썬 셸과 슬랙으로 동시에 출력한다."""
     print(datetime.now().strftime('[%m/%d %H:%M:%S]'), message)
     strbuf = datetime.now().strftime('[%m/%d %H:%M:%S] ') + message
     slack.chat.post_message('#stocks', strbuf)
+
+# Print out message in python shell
 
 
 def printlog(message, *args):
@@ -63,6 +72,8 @@ def get_current_price(code):
     item['bid'] = cpStock.GetHeaderValue(17)  # 매도호가
     return item['cur_price'], item['ask'], item['bid']
 
+# StockChart information
+
 
 def get_ohlc(code, qty):
     """인자로 받은 종목의 OHLC 가격 정보를 qty 개수만큼 반환한다."""
@@ -83,6 +94,8 @@ def get_ohlc(code, qty):
                      cpOhlc.GetDataValue(3, i), cpOhlc.GetDataValue(4, i)])
     df = pd.DataFrame(rows, columns=columns, index=index)
     return df
+
+# Get account balance
 
 
 def get_stock_balance(code):
@@ -118,6 +131,8 @@ def get_stock_balance(code):
         stock_name = cpCodeMgr.CodeToName(code)
         return stock_name, 0
 
+# Get value of current avaliable buying cash
+
 
 def get_current_cash():
     """증거금 100% 주문 가능 금액을 반환한다."""
@@ -128,6 +143,8 @@ def get_current_cash():
     cpCash.SetInputValue(1, accFlag[0])  # 상품구분 - 주식 상품 중 첫번째
     cpCash.BlockRequest()
     return cpCash.GetHeaderValue(9)  # 증거금 100% 주문 가능 금액
+
+# Get the target price to buy
 
 
 def get_target_price(code):
@@ -150,6 +167,8 @@ def get_target_price(code):
         dbgout("`get_target_price() -> exception! " + str(ex) + "`")
         return None
 
+# Get moving average for buying and selling
+
 
 def get_movingaverage(code, window):
     """인자로 받은 종목에 대한 이동평균가격을 반환한다."""
@@ -167,6 +186,8 @@ def get_movingaverage(code, window):
     except Exception as ex:
         dbgout('get_movingavrg(' + str(window) + ') -> exception! ' + str(ex))
         return None
+
+# Buy function
 
 
 def buy_etf(code):
@@ -186,7 +207,13 @@ def buy_etf(code):
             buy_qty = buy_amount // ask_price
         stock_name, stock_qty = get_stock_balance(code)  # 종목명과 보유수량 조회
         # printlog('bought_list:', bought_list, 'len(bought_list):',
-        #    len(bought_list), 'target_buy_count:', target_buy_count)
+        #    len(bought_list), 'target_buy_count:', target_buy_count
+        print('Target Price: ', target_price)
+        print('Ask Price: ;', ask_price)
+        print('Bid Price: ', bid_price)
+        # If the current price is higher than target price and
+        # current price is higher than 5ma and 10ma then algorithm tries
+        # to buy the stock.
         if current_price > target_price and current_price > ma5_price \
                 and current_price > ma10_price:
             printlog(stock_name + '(' + str(code) + ') ' + str(buy_qty) +
@@ -200,9 +227,12 @@ def buy_etf(code):
             cpOrder.SetInputValue(2, accFlag[0])  # 상품구분 - 주식 상품 중 첫번째
             cpOrder.SetInputValue(3, code)  # 종목코드
             cpOrder.SetInputValue(4, buy_qty)  # 매수할 수량
-            cpOrder.SetInputValue(7, "2")  # 주문조건 0:기본, 1:IOC, 2:FOK
+            cpOrder.SetInputValue(7, "0")  # 주문조건 0:기본, 1:IOC, 2:FOK
             cpOrder.SetInputValue(8, "12")  # 주문호가 1:보통, 3:시장가
             # 5:조건부, 12:최유리, 13:최우선
+            # 모의투자 does not allow FOK/IOC for buying and selling
+            # Need to use 보통(0)
+
             # 매수 주문 요청
             ret = cpOrder.BlockRequest()
             printlog('최유리 FoK 매수 ->', stock_name, code, buy_qty, '->', ret)
@@ -221,6 +251,8 @@ def buy_etf(code):
                        ") -> " + str(bought_qty) + "EA bought!" + "`")
     except Exception as ex:
         dbgout("`buy_etf(" + str(code) + ") -> exception! " + str(ex) + "`")
+
+# Sell function
 
 
 def sell_all():
@@ -258,6 +290,7 @@ def sell_all():
         dbgout("sell_all() -> exception! " + str(ex))
 
 
+# Main function to run this autotrade bot
 if __name__ == '__main__':
     try:
         symbol_list = ['A252670', 'A122630', 'A251340', 'A233740']
@@ -272,7 +305,7 @@ if __name__ == '__main__':
         printlog('종목별 주문 비율 :', buy_percent)
         printlog('종목별 주문 금액 :', buy_amount)
         printlog('시작 시간 :', datetime.now().strftime('%m/%d %H:%M:%S'))
-        soldout = False;
+        soldout = False
 
         while True:
             t_now = datetime.now()
