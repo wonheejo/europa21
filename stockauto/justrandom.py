@@ -1,42 +1,77 @@
-# This is for sending an alarm/message to slacker bot
-
-from slacker import Slacker
-import os, sys, ctypes
 import win32com.client
 import pandas as pd
-from datetime import datetime
-import time, calendar
 
-slack = Slacker('xoxb-1709162090453-1712267545922-zBUfyirsvPaOjIXJVqdWle4R')
+# This page is for getting the bollinger band.
 
-# Send a message to #general channel
+instStockChart = win32com.client.Dispatch("CpSysDib.StockChart")
+instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
 
-def dbgout(message):
-    """인자로 받은 문자열을 파이썬 셸과 슬랙으로 동시에 출력한다."""
-    print(datetime.now().strftime('[%m/%d %H:%M:%S]'), message)
-    strbuf = datetime.now().strftime('[%m/%d %H:%M:%S] ') + message
-    slack.chat.post_message('#stocks', strbuf)
+testCode = instCpStockCode.NameToCode('삼성전자')
+nameCode = instCpStockCode.CodetoName(testCode)
+print(testCode)
+print(nameCode)
 
-def printlog(message, *args):
-    """인자로 받은 문자열을 파이썬 셸에 출력한다."""
-    print(datetime.now().strftime('[%m/%d %H:%M:%S]'), message, *args)
+instStockChart.SetInputValue(0, testCode)
+instStockChart.SetInputValue(1, ord('1'))
+instStockChart.SetInputValue(2, 20210224)
+instStockChart.SetInputValue(3, 20210126)
+#instStockChart.SetInputValue(4, 78)
+instStockChart.SetInputValue(5, (0, 1, 5))
+instStockChart.SetInputValue(6, ord('m'))
+instStockChart.SetInputValue(7, 5)
+instStockChart.SetInputValue(9, ord('1'))
+instStockChart.SetInputvalue(10, ord('1'))
 
-cpCodeMgr = win32com.client.Dispatch('CpUtil.CpStockCode')
-cpStatus = win32com.client.Dispatch('CpUtil.CpCybos')
-cpTradeUtil = win32com.client.Dispatch('CpTrade.CpTdUtil')
-cpStock = win32com.client.Dispatch('DsCbo1.StockMst')
-cpOhlc = win32com.client.Dispatch('CpSysDib.StockChart')
-cpBalance = win32com.client.Dispatch('CpTrade.CpTd6033')
-cpCash = win32com.client.Dispatch('CpTrade.CpTdNew5331A')
-cpOrder = win32com.client.Dispatch('CpTrade.CpTd0311')
+# BlockRequest
+instStockChart.BlockRequest()
 
-cpTradeUtil.TradeInit()
-acc = cpTradeUtil.AccountNumber[0]  # 계좌번호
-accFlag = cpTradeUtil.GoodsList(acc, 1)  # -1:전체, 1:주식, 2:선물/옵션
-cpBalance.SetInputValue(0, acc)  # 계좌번호
-cpBalance.SetInputValue(1, accFlag[0])  # 상품구분 - 주식 상품 중 첫번째
-cpBalance.SetInputValue(2, 50)  # 요청 건수(최대 50)
-cpBalance.BlockRequest()
+# GetHeaderValue
+numData = instStockChart.GetHeaderValue(3)
+numField = instStockChart.GetHeaderValue(1)
+# GetDataValue
 
-#dbgout('계좌명: ' + str(cpBalance.GetHeaderValue(0)))
-print('계좌명: ' + str(cpBalance.GetHeaderValue(0)))
+dates = []
+times = []
+end = []
+
+
+for i in range(numData):
+
+    #print(instStockChart.GetDataValue(0, i), end=' ')
+    #print(instStockChart.GetDataValue(1, i), end=' ')
+    #print(instStockChart.GetDataValue(2, i), end=' ')
+    dates.append(instStockChart.GetDataValue(0, i))
+    times.append(instStockChart.GetDataValue(1, i))
+    end.append(instStockChart.GetDataValue(2, i))
+    #print("")
+
+# Total number of data requested
+print('numData:', numData)
+# Number of fields(number of variables requested)
+print('numField: ', numField)
+
+
+# Number of 5min in 1 day is equal to 77
+oneday = 77
+total = 0
+count = 0
+bollinger = []
+for i in range(1, len(end)):
+    count += 1
+    profit = end[i] - end[i - 1]
+    #print(dates[i], times[i], end[i], profit, profit**2)
+    total += profit ** 2
+    if count == oneday-1:
+        #print('date: {}, bol: {} '.format(dates[i], total/oneday))
+        bollinger.append(total/oneday)
+        count = 0
+        total = 0
+
+temp = bollinger[0]
+for i in range(1, len(bollinger)):
+    temp += bollinger[i]
+
+final = temp/20
+upper = final*2
+lower = final*(-2)
+print(upper, final, lower)
