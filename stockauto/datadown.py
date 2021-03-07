@@ -15,10 +15,10 @@ print(testCode)
 print(nameCode)
 
 instStockChart.SetInputValue(0, testCode)
-instStockChart.SetInputValue(1, ord('2'))
-instStockChart.SetInputValue(2, 20160609)
-instStockChart.SetInputValue(3, 20160215)
-instStockChart.SetInputValue(4, 30000)
+instStockChart.SetInputValue(1, ord('1'))
+instStockChart.SetInputValue(2, 20210305)
+instStockChart.SetInputValue(3, 20190305)
+#instStockChart.SetInputValue(4, 30000)
 instStockChart.SetInputValue(5, (0, 1, 5, 8))
 instStockChart.SetInputValue(6, ord('m'))
 instStockChart.SetInputValue(7, 5)
@@ -44,7 +44,7 @@ vols = []
 for i in range(numData):
     #if i%5 == 1:
     for j in range(numField):
-        print(instStockChart.GetDataValue(j, i), end=" ")
+        #print(instStockChart.GetDataValue(j, i), end=" ")
         if j == 0:
             dates.append(instStockChart.GetDataValue(j, i))
         if j == 1:
@@ -55,7 +55,7 @@ for i in range(numData):
             vols.append(instStockChart.GetDataValue(j, i))
         #if j == 4:
         #    amounts.append(instStockChart.GetDataValue(j, i))
-    print("")
+    #print("")
 
 
 data = {'date': dates,
@@ -65,15 +65,15 @@ data = {'date': dates,
         #'amounts': amounts}
 
 df = pd.DataFrame(data)
-print(df)
 df = df.sort_values(by=['date', 'times'], ascending=True)
 df = df.reset_index()
 df = df.drop('index', axis=1)
 print(df)
+print('number of data: ', numData)
 print(len(dates))
 print('date size:', sys.getsizeof(dates))
 print('times size:', sys.getsizeof(dates))
 print('end size:', sys.getsizeof(dates))
 print('vols size:', sys.getsizeof(dates))
 #print('amounts size:', sys.getsizeof(dates))
-#df.to_csv('삼성전자_20160215_20160429.csv')
+df.to_csv('삼성전자_20190305_20210305.csv')
