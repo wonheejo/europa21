@@ -16,28 +16,33 @@ print(nameCode)
 
 instStockChart.SetInputValue(0, testCode)
 instStockChart.SetInputValue(1, ord('1'))
-instStockChart.SetInputValue(2, 20210305)
-instStockChart.SetInputValue(3, 20190305)
+instStockChart.SetInputValue(2, 20190417)
+instStockChart.SetInputValue(3, 20190226)
 #instStockChart.SetInputValue(4, 30000)
-instStockChart.SetInputValue(5, (0, 1, 5, 8))
+instStockChart.SetInputValue(5, (0, 1, 2, 3, 4, 5, 8))
 instStockChart.SetInputValue(6, ord('m'))
 instStockChart.SetInputValue(7, 5)
 instStockChart.SetInputValue(9, ord('1'))
 instStockChart.SetInputvalue(10, ord('1'))
 
+
+
 # BlockRequest
 instStockChart.BlockRequest()
+
 
 # GetHeaderValue
 numData = instStockChart.GetHeaderValue(3)
 numField = instStockChart.GetHeaderValue(1)
-print('Date     Time End   Volume')
 # GetDataValue
 
 # Initialize lists to store data
 dates = []
 times = []
+start = []
 end = []
+high = []
+low = []
 vols = []
 #amounts = []
 # Print and append into various lists
@@ -50,16 +55,24 @@ for i in range(numData):
         if j == 1:
             times.append(instStockChart.GetDataValue(j, i))
         if j == 2:
-            end.append(instStockChart.GetDataValue(j, i))
+            start.append(instStockChart.GetDataValue(j, i))
         if j == 3:
+            high.append(instStockChart.GetDataValue(j, i))
+        if j == 4:
+            low.append(instStockChart.GetDataValue(j, i))
+        if j == 5:
+            end.append(instStockChart.GetDataValue(j, i))
+        if j == 6:
             vols.append(instStockChart.GetDataValue(j, i))
-        #if j == 4:
-        #    amounts.append(instStockChart.GetDataValue(j, i))
+
     #print("")
 
 
 data = {'date': dates,
         'times': times,
+        'start': start,
+        'high:': high,
+        'low': low,
         'end': end,
         'vols': vols}
         #'amounts': amounts}
@@ -72,8 +85,11 @@ print(df)
 print('number of data: ', numData)
 print(len(dates))
 print('date size:', sys.getsizeof(dates))
-print('times size:', sys.getsizeof(dates))
-print('end size:', sys.getsizeof(dates))
-print('vols size:', sys.getsizeof(dates))
+print('times size:', sys.getsizeof(times))
+print('start size:', sys.getsizeof(start))
+print('high size:', sys.getsizeof(high))
+print('low size:', sys.getsizeof(low))
+print('end size:', sys.getsizeof(end))
+print('vols size:', sys.getsizeof(vols))
 #print('amounts size:', sys.getsizeof(dates))
-df.to_csv('삼성전자_20190305_20210305.csv')
+df.to_csv('삼성전자_20190226_20190417.csv')
