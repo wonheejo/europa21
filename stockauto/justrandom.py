@@ -1,6 +1,7 @@
 
 import win32com.client
 import pandas as pd
+import numpy as np
 
 # This page is for getting the bollinger band.
 
@@ -14,12 +15,12 @@ print(nameCode)
 
 instStockChart.SetInputValue(0, testCode)
 instStockChart.SetInputValue(1, ord('1'))
-instStockChart.SetInputValue(2, 20210224)
-instStockChart.SetInputValue(3, 20210126)
+instStockChart.SetInputValue(2, 20210309)
+instStockChart.SetInputValue(3, 20210101)
 #instStockChart.SetInputValue(4, 78)
-instStockChart.SetInputValue(5, (0, 1, 5))
-instStockChart.SetInputValue(6, ord('m'))
-instStockChart.SetInputValue(7, 5)
+instStockChart.SetInputValue(5, (0, 5, 8))
+instStockChart.SetInputValue(6, ord('D'))
+instStockChart.SetInputValue(7, 1)
 instStockChart.SetInputValue(9, ord('1'))
 instStockChart.SetInputvalue(10, ord('1'))
 
@@ -32,8 +33,8 @@ numField = instStockChart.GetHeaderValue(1)
 # GetDataValue
 
 dates = []
-times = []
-end = []
+close = []
+vol = []
 
 
 for i in range(numData):
@@ -42,8 +43,8 @@ for i in range(numData):
     #print(instStockChart.GetDataValue(1, i), end=' ')
     #print(instStockChart.GetDataValue(2, i), end=' ')
     dates.append(instStockChart.GetDataValue(0, i))
-    times.append(instStockChart.GetDataValue(1, i))
-    end.append(instStockChart.GetDataValue(2, i))
+    close.append(instStockChart.GetDataValue(1, i))
+    vol.append(instStockChart.GetDataValue(2, i))
     #print("")
 
 # Total number of data requested
@@ -51,9 +52,47 @@ print('numData:', numData)
 # Number of fields(number of variables requested)
 print('numField: ', numField)
 
+# Fixed bollinger band
+LB = []
+midB = []
+UB = []
+bbdate = []
+for i in range(len(dates)):
+    sum = 0
+    total = []
+
+    if len(dates)-i > 20:
+        #print('Current date and close:', dates[i], close[i])
+        for j in range(20):
+            sum += (close[i+j])
+            total.append(close[i+j])
+
+        mid = sum/20
+        stdv = round(np.std(total), 2)
+        #print('Average: {}, Stdv: {}'.format(mid, stdv))
+        #print('LB: {}, Mid: {}, HB: {}'.format(mid-stdv, mid, mid+stdv))
+        bbdate.append(dates[i])
+        LB.append(mid-stdv)
+        midB.append(mid)
+        UB.append(mid+stdv)
+
+for i in range(len(UB)):
+    print('Date:', bbdate[i])
+    print('LB:', LB[i])
+    print('mid:', midB[i])
+    print('UB:', UB[i])
+    print('')
+
+
+
+
+
+"""
+Bollinger Band using 5min data in my own ways.....(Not correct method)
+
 
 # Number of 5min in 1 day is equal to 77
-oneday = 77
+onetime = 20
 total = 0
 count = 0
 bollinger = []
@@ -76,3 +115,4 @@ final = temp/20
 upper = final*2
 lower = final*(-2)
 print(upper, final, lower)
+"""
