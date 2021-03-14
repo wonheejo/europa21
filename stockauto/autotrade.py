@@ -7,8 +7,7 @@ import win32com.client
 import pandas as pd
 from datetime import datetime
 from slacker import Slacker
-<< << << < HEAD
-== == == =
+
 """
 >>>>>>> fa9bad7dfca2db90a3f73085d549fe9155eef70d
 from bs4 import BeautifulSoup
@@ -17,12 +16,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 """
 
-<< << << < HEAD
+
 # Slack authorization code
-slack = Slacker('xoxb-1709162090453-1712267545922-zBUfyirsvPaOjIXJVqdWle4R')
-== == == =
 slack = Slacker('xoxb-1709162090453-1712267545922-HzdYzwD9uU7Okk7wZV1iyWVI')
->>>>>> > fa9bad7dfca2db90a3f73085d549fe9155eef70d
 
 # Send message out to slacker bot
 
@@ -90,7 +86,7 @@ def get_ohlc(code, qty):
     cpOhlc.SetInputValue(1, ord('2'))  # 1:기간, 2:개수
     cpOhlc.SetInputValue(4, qty)  # 요청개수
     cpOhlc.SetInputValue(5, [0, 2, 3, 4, 5])  # 0:날짜, 2~5:OHLC
-    cpOhlc.SetInputValue(6, ord('D'))  # D:일단위
+    cpOhlc.SetInputValue(6, ord('T'))  # T:Tick단위
     cpOhlc.SetInputValue(9, ord('1'))  # 0:무수정주가, 1:수정주가
     cpOhlc.BlockRequest()
     count = cpOhlc.GetHeaderValue(3)  # 3:수신개수
@@ -162,6 +158,7 @@ def get_target_price(code):
         time_now = datetime.now()
         str_today = time_now.strftime('%Y%m%d')
         ohlc = get_ohlc(code, 10)
+        print(ohlc)
         if str_today == str(ohlc.iloc[0].name):
             today_open = ohlc.iloc[0].open
             lastday = ohlc.iloc[1]
