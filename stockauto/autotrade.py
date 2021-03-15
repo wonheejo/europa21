@@ -17,7 +17,7 @@ from selenium.webdriver.chrome.options import Options
 
 
 # Slack authorization code
-slack = Slacker('xoxb-1709162090453-1712267545922-HzdYzwD9uU7Okk7wZV1iyWVI')
+slack = Slacker('')
 
 # Send message out to slacker bot
 
@@ -179,14 +179,15 @@ def bollinger(code):
 
     # CpStockCode = cpCodeMgr
     # StockChart = cpOhlc
+    # CpStockCode = cpCodeMgr
+    # StockChart = cpOhlc
     testcode = code
-    nameCode = cpCodeMgr.CodetoName(testCode)
 
-    cpOhlc.SetInputValue(0, testCode)
+    cpOhlc.SetInputValue(0, testcode)
     cpOhlc.SetInputValue(1, ord('2'))
-    #cpOhlc.SetInputValue(2, 20210309)
-    #cpOhlc.SetInputValue(3, 20210101)
-    instStockChart.SetInputValue(4, 20)
+    # cpOhlc.SetInputValue(2, 20210309)
+    # cpOhlc.SetInputValue(3, 20210101)
+    cpOhlc.SetInputValue(4, 20)
     cpOhlc.SetInputValue(5, (0, 5, 8))
     cpOhlc.SetInputValue(6, ord('D'))
     cpOhlc.SetInputValue(7, 1)
@@ -206,19 +207,19 @@ def bollinger(code):
     vol = []
 
     for i in range(numData):
-        dates.append(instStockChart.GetDataValue(0, i))
-        close.append(instStockChart.GetDataValue(1, i))
-        vol.append(instStockChart.GetDataValue(2, i))
+        dates.append(cpOhlc.GetDataValue(0, i))
+        close.append(cpOhlc.GetDataValue(1, i))
+        vol.append(cpOhlc.GetDataValue(2, i))
 
     sum = 0
     for i in range(len(dates)):
         sum += close[i]
 
-    mid = sum/20
+    mid = sum / 20
     stdv = round(np.std(close), 2)
 
-    LB = mid-stdv
-    UB = mid+stdv
+    LB = mid - stdv
+    UB = mid + stdv
 
     return LB, UB
 
@@ -309,8 +310,6 @@ def buy_etf(code):
         dbgout("`buy_etf(" + str(code) + ") -> exception! " + str(ex) + "`")
 
 # Sell function
-
-
 def sell_all():
     """보유한 모든 종목을 최유리 지정가 IOC 조건으로 매도한다."""
     try:
@@ -362,8 +361,12 @@ if __name__ == '__main__':
         printlog('종목별 주문 비율 :', buy_percent)
         printlog('종목별 주문 금액 :', buy_amount)
         printlog('시작 시간 :', datetime.now().strftime('%m/%d %H:%M:%S'))
-        for syms in symbol_list:
-            lower, upper = bollinger(syms)
+
+        # Get the upper and lower bound of the stocks using the bollinger function
+        lower = []
+        upper = []
+        for i in range(len(symbol_list)):
+            lower[i], upper[i] = bollinger(symbol_list[i])
 
         while True:
             t_now = datetime.now()
@@ -376,19 +379,24 @@ if __name__ == '__main__':
                 printlog('Today is', 'Saturday.' if today == 5 else 'Sunday.')
                 sys.exit(0)
 
-            if t_start < t_now < t_sell:  # AM 09:05 ~ PM 03:15 : 매수
+            if t_start < t_now < t_exit:  # AM 09:05 ~ PM 03:20 : Trade time
+
+                # Get the price details of a certain stock
+                current_price = []
+                ask_price = []
+                bid_price = []
+                for i in range(len(symbol_list)):
+                    current_price[i], ask_price[i], bid_price[i] = get_current_price(symbol_list[i])
+
+                # If the length of bought list is smaller than target buy count, then it will buy
                 for sym in symbol_list:
                     if len(bought_list) < target_buy_count:
                         buy_etf(sym)
                         time.sleep(1)
+
                 if t_now.minute == 30 and 0 <= t_now.second <= 5:
                     get_stock_balance('ALL')
                     time.sleep(5)
-
-            if t_sell < t_now < t_exit:  # PM 03:15 ~ PM 03:20 : 일괄 매도
-                if sell_all() == True:
-                    dbgout('`sell_all() returned True -> self-destructed!`')
-                    sys.exit(0)
 
             if t_exit < t_now:  # PM 03:20 ~ :프로그램 종료
                 dbgout('`self-destructed!`')

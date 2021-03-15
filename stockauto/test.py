@@ -1,6 +1,7 @@
 import win32com.client
 import pandas as pd
-instStockChart = win32com.client.Dispatch("CpSysDib.StockChart")
+import numpy as np
+cpOhlc = win32com.client.Dispatch("CpSysDib.StockChart")
 instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
 
 testCode = instCpStockCode.NameToCode('삼성전자')
@@ -8,52 +9,51 @@ nameCode = instCpStockCode.CodetoName(testCode)
 print(testCode)
 print(nameCode)
 
-instStockChart.SetInputValue(0, testCode)
-instStockChart.SetInputValue(1, ord('1'))
-instStockChart.SetInputValue(2, 20160217)
-instStockChart.SetInputValue(3, 20160217)
-#instStockChart.SetInputValue(4, 78)
-instStockChart.SetInputValue(5, (0, 1, 5, 8))
-instStockChart.SetInputValue(6, ord('m'))
-instStockChart.SetInputValue(7, 5)
-instStockChart.SetInputValue(9, ord('1'))
-instStockChart.SetInputvalue(10, ord('1'))
+def bollinger(code):
 
-# BlockRequest
-instStockChart.BlockRequest()
+    # CpStockCode = cpCodeMgr
+    # StockChart = cpOhlc
+    testcode = code
 
-# GetHeaderValue
-numData = instStockChart.GetHeaderValue(3)
-numField = instStockChart.GetHeaderValue(1)
-print('Date     Time End   Volume')
-# GetDataValue
+    cpOhlc.SetInputValue(0, testcode)
+    cpOhlc.SetInputValue(1, ord('2'))
+    #cpOhlc.SetInputValue(2, 20210309)
+    #cpOhlc.SetInputValue(3, 20210101)
+    cpOhlc.SetInputValue(4, 20)
+    cpOhlc.SetInputValue(5, (0, 5, 8))
+    cpOhlc.SetInputValue(6, ord('D'))
+    cpOhlc.SetInputValue(7, 1)
+    cpOhlc.SetInputValue(9, ord('1'))
+    cpOhlc.SetInputvalue(10, ord('1'))
 
-dates = []
-times = []
-end = []
-vols = []
+    # BlockRequest
+    cpOhlc.BlockRequest()
 
+    # GetHeaderValue
+    numData = cpOhlc.GetHeaderValue(3)
+    numField = cpOhlc.GetHeaderValue(1)
 
-for i in range(numData):
-    #if i%5 == 1:
-    for j in range(numField):
-        print(instStockChart.GetDataValue(0, i))
-        print(instStockChart.GetDataValue(1, i))
-        print(instStockChart.GetDataValue(2, i))
-        print(instStockChart.GetDataValue(3, i))
-        dates.append(instStockChart.GetDataValue(0, i))
-        times.append(instStockChart.GetDataValue(1, i))
-        end.append(instStockChart.GetDataValue(2, i))
-        vols.append(instStockChart.GetDataValue(3, i))
-    print("")
+    # GetDataValue
+    dates = []
+    close = []
+    vol = []
 
-data = {'date': dates,
-        'times': times,
-        'end': end,
-        'vols': vols}
+    for i in range(numData):
+        dates.append(cpOhlc.GetDataValue(0, i))
+        close.append(cpOhlc.GetDataValue(1, i))
+        vol.append(cpOhlc.GetDataValue(2, i))
 
-df = pd.DataFrame(data, columns=['Dates', 'Time', 'End', 'Vol'])
-df = df.set_index('Dates')
+    sum = 0
+    for i in range(len(dates)):
+        sum += close[i]
 
-df.to_csv('5MinTestData.csv')
+    mid = sum/20
+    stdv = round(np.std(close), 2)
 
+    LB = mid-stdv
+    UB = mid+stdv
+
+    return LB, UB
+
+lower, upper = bollinger(testCode)
+print(lower, upper)
