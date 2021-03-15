@@ -9,7 +9,6 @@ from datetime import datetime
 from slacker import Slacker
 
 """
->>>>>>> fa9bad7dfca2db90a3f73085d549fe9155eef70d
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from selenium import webdriver
@@ -173,6 +172,56 @@ def get_target_price(code):
         dbgout("`get_target_price() -> exception! " + str(ex) + "`")
         return None
 
+# Get the bollinger band's lower and upper values
+
+
+def bollinger(code):
+
+    # CpStockCode = cpCodeMgr
+    # StockChart = cpOhlc
+    testcode = code
+    nameCode = cpCodeMgr.CodetoName(testCode)
+
+    cpOhlc.SetInputValue(0, testCode)
+    cpOhlc.SetInputValue(1, ord('2'))
+    #cpOhlc.SetInputValue(2, 20210309)
+    #cpOhlc.SetInputValue(3, 20210101)
+    instStockChart.SetInputValue(4, 20)
+    cpOhlc.SetInputValue(5, (0, 5, 8))
+    cpOhlc.SetInputValue(6, ord('D'))
+    cpOhlc.SetInputValue(7, 1)
+    cpOhlc.SetInputValue(9, ord('1'))
+    cpOhlc.SetInputvalue(10, ord('1'))
+
+    # BlockRequest
+    cpOhlc.BlockRequest()
+
+    # GetHeaderValue
+    numData = cpOhlc.GetHeaderValue(3)
+    numField = cpOhlc.GetHeaderValue(1)
+
+    # GetDataValue
+    dates = []
+    close = []
+    vol = []
+
+    for i in range(numData):
+        dates.append(instStockChart.GetDataValue(0, i))
+        close.append(instStockChart.GetDataValue(1, i))
+        vol.append(instStockChart.GetDataValue(2, i))
+
+    sum = 0
+    for i in range(len(dates)):
+        sum += close[i]
+
+    mid = sum/20
+    stdv = round(np.std(close), 2)
+
+    LB = mid-stdv
+    UB = mid+stdv
+
+    return LB, UB
+
 # Get moving average for buying and selling
 
 
@@ -203,12 +252,14 @@ def buy_etf(code):
         if code in bought_list:  # 매수 완료 종목이면 더 이상 안 사도록 함수 종료
             # printlog('code:', code, 'in', bought_list)
             return False
+
         time_now = datetime.now()
         current_price, ask_price, bid_price = get_current_price(code)
         target_price = get_target_price(code)  # 매수 목표가
         ma5_price = get_movingaverage(code, 5)  # 5일 이동평균가
         ma10_price = get_movingaverage(code, 10)  # 10일 이동평균가
         buy_qty = 0  # 매수할 수량 초기화
+
         if ask_price > 0:  # 매수호가가 존재하면
             buy_qty = buy_amount // ask_price
         stock_name, stock_qty = get_stock_balance(code)  # 종목명과 보유수량 조회
@@ -236,6 +287,7 @@ def buy_etf(code):
             # 매수 주문 요청
             ret = cpOrder.BlockRequest()
             print(cpOrder.GetDibMsg1())
+
             printlog('보통 IoC 매수 ->', stock_name, code, buy_qty, '->', ret)
             if ret == 4:
                 remain_time = cpStatus.LimitRequestRemainTime
@@ -243,6 +295,7 @@ def buy_etf(code):
                 time.sleep(remain_time / 1000)
                 return False
             time.sleep(2)
+
             printlog('현금주문 가능금액 :', buy_amount)
             stock_name, bought_qty = get_stock_balance(code)
             printlog('get_stock_balance :', stock_name, stock_qty)
@@ -309,7 +362,8 @@ if __name__ == '__main__':
         printlog('종목별 주문 비율 :', buy_percent)
         printlog('종목별 주문 금액 :', buy_amount)
         printlog('시작 시간 :', datetime.now().strftime('%m/%d %H:%M:%S'))
-        soldout = False
+        for syms in symbol_list:
+            lower, upper = bollinger(syms)
 
         while True:
             t_now = datetime.now()
@@ -321,9 +375,7 @@ if __name__ == '__main__':
             if today == 5 or today == 6:  # 토요일이나 일요일이면 자동 종료
                 printlog('Today is', 'Saturday.' if today == 5 else 'Sunday.')
                 sys.exit(0)
-            if t_9 < t_now < t_start and soldout == False:
-                soldout = True
-                sell_all()
+
             if t_start < t_now < t_sell:  # AM 09:05 ~ PM 03:15 : 매수
                 for sym in symbol_list:
                     if len(bought_list) < target_buy_count:
@@ -332,10 +384,12 @@ if __name__ == '__main__':
                 if t_now.minute == 30 and 0 <= t_now.second <= 5:
                     get_stock_balance('ALL')
                     time.sleep(5)
+
             if t_sell < t_now < t_exit:  # PM 03:15 ~ PM 03:20 : 일괄 매도
                 if sell_all() == True:
                     dbgout('`sell_all() returned True -> self-destructed!`')
                     sys.exit(0)
+
             if t_exit < t_now:  # PM 03:20 ~ :프로그램 종료
                 dbgout('`self-destructed!`')
                 sys.exit(0)
