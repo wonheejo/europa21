@@ -366,7 +366,9 @@ if __name__ == '__main__':
         lower = []
         upper = []
         for i in range(len(symbol_list)):
-            lower[i], upper[i] = bollinger(symbol_list[i])
+            low, up = bollinger(symbol_list[i])
+            lower.append(low)
+            upper.append(up)
 
         while True:
             t_now = datetime.now()
@@ -380,13 +382,15 @@ if __name__ == '__main__':
                 sys.exit(0)
 
             if t_start < t_now < t_exit:  # AM 09:05 ~ PM 03:20 : Trade time
-
                 # Get the price details of a certain stock
                 current_price = []
                 ask_price = []
                 bid_price = []
                 for i in range(len(symbol_list)):
-                    current_price[i], ask_price[i], bid_price[i] = get_current_price(symbol_list[i])
+                    cur, ask, bid = get_current_price(symbol_list[i])
+                    current_price.append(cur)
+                    ask_price.append(ask)
+                    bid_price.append(bid)
 
                 # If the length of bought list is smaller than target buy count, then it will buy
                 for sym in symbol_list:
